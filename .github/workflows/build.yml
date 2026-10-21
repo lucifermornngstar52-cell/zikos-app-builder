@@ -1,0 +1,57 @@
+name: build
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: release-build
+  cancel-in-progress: false
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Приложение в ассеты
+        run: |
+          mkdir -p app/src/main/assets/app
+          cp -r site/* app/src/main/assets/app/
+      - run: gradle assembleDebug --no-daemon
+      - run: cp app/build/outputs/apk/debug/app-debug.apk ZikApp-Android.apk
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_number }}
+          name: Сборка ${{ github.run_number }}
+          files: ZikApp-Android.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  exe:
+    needs: apk
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Скачать Electron
+        shell: pwsh
+        run: |
+          Invoke-WebRequest -Uri 'https://github.com/electron/electron/releases/download/v33.2.0/electron-v33.2.0-win32-x64.zip' -OutFile el.zip
+          Expand-Archive el.zip -DestinationPath elx
+      - name: Упаковать приложение
+        shell: pwsh
+        run: |
+          $root = Get-ChildItem elx -Directory | Select-Object -First 1
+          if (-not $root) { $root = Get-Item elx }
+          New-Item -ItemType Directory -Force -Path pkg | Out-Null
+          Set-Content pkg\package.json '{"name":"zikapp","version":"1.0.0","main":"main.js"}'
+          Set-Content pkg\main.js "const path=require('path');const e=require('electron');e.app.whenReady().then(()=>{const w=new e.BrowserWindow({width:1280,height:720,autoHideMenuBar:true});w.loadFile(path.join(__dirname,'app','index.html'));});"
+          Copy-Item site pkg\app -Recurse -Force
+          New-Item -ItemType Directory -Force -Path ($root.FullName + '\resources\app') | Out-Null
+          Copy-Item pkg\* ($root.FullName + '\resources\app\') -Recurse -Force
+          Compress-Archive -Path ($root.FullName + '\*') -DestinationPath ZikApp-Windows-Portable.zip
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_number }}
+          name: Сборка ${{ github.run_number }}
+          files: ZikApp-Windows-Portable.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
