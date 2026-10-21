@@ -33,20 +33,21 @@ jobs:
       - name: Скачать Electron
         shell: pwsh
         run: |
-          Invoke-WebRequest -Uri 'https://github.com/electron/electron/releases/download/v33.2.0/electron-v33.2.0-win32-x64.zip' -OutFile el.zip
-          Expand-Archive el.zip -DestinationPath elx
+          curl.exe -sL -o el.zip https://github.com/electron/electron/releases/download/v33.2.0/electron-v33.2.0-win32-x64.zip
+          if ((Get-Item el.zip).Length -lt 100MB) { throw "electron zip неполный: $((Get-Item el.zip).Length)" }
       - name: Упаковать приложение
         shell: pwsh
         run: |
-          $root = Get-ChildItem elx -Directory | Select-Object -First 1
-          if (-not $root) { $root = Get-Item elx }
-          New-Item -ItemType Directory -Force -Path pkg | Out-Null
-          Set-Content pkg\package.json '{"name":"zikapp","version":"1.0.0","main":"main.js"}'
-          Set-Content pkg\main.js "const path=require('path');const e=require('electron');e.app.whenReady().then(()=>{const w=new e.BrowserWindow({width:1280,height:720,autoHideMenuBar:true});w.loadFile(path.join(__dirname,'app','index.html'));});"
-          Copy-Item site pkg\app -Recurse -Force
-          New-Item -ItemType Directory -Force -Path ($root.FullName + '\resources\app') | Out-Null
-          Copy-Item pkg\* ($root.FullName + '\resources\app\') -Recurse -Force
-          Compress-Archive -Path ($root.FullName + '\*') -DestinationPath ZikApp-Windows-Portable.zip
+          New-Item -ItemType Directory -Force elx | Out-Null
+          tar -xf el.zip -C elx
+          if (-not (Test-Path elx\electron.exe)) { throw 'electron.exe не найден после распаковки' }
+          New-Item -ItemType Directory -Force -Path elx\resources\app | Out-Null
+          Set-Content elx\resources\app\package.json '{"name":"zikapp","version":"1.0.0","main":"main.js"}'
+          Set-Content elx\resources\app\main.js "const path=require('path');const e=require('electron');e.app.whenReady().then(()=>{const w=new e.BrowserWindow({width:1280,height:720,autoHideMenuBar:true});w.loadFile(path.join(__dirname,'app','index.html'));});"
+          Copy-Item site elx\resources\app\app -Recurse -Force
+          Remove-Item ZikApp-Windows-Portable.zip -ErrorAction SilentlyContinue
+          tar -a -cf ZikApp-Windows-Portable.zip -C elx .
+          if ((Get-Item ZikApp-Windows-Portable.zip).Length -lt 50MB) { throw "портативный zip слишком мал: $((Get-Item ZikApp-Windows-Portable.zip).Length)" }
       - name: Release
         uses: softprops/action-gh-release@v2
         with:
