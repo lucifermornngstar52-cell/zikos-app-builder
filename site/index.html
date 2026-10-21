@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Галерея картинок</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Simple styling – you can change it as you wish -->
+    <style>
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            background: #f4f4f9;
+            margin: 0;
+            padding: 0;
+            color: #333;
+        }
+        header {
+            background: #4a90e2;
+            color: white;
+            text-align: center;
+            padding: 1.5rem 0;
+        }
+        h1 { margin: 0; font-size: 2rem; }
+        main {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+        .gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+        .gallery img {
+            width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+            transition: transform .2s;
+        }
+        .gallery img:hover {
+            transform: scale(1.03);
+        }
+        footer {
+            text-align: center;
+            padding: 1rem;
+            background: #eaeaea;
+            font-size: 0.9rem;
+            color: #555;
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+    <h1>Галерея картинок</h1>
+</header>
+
+<main>
+    <section class="gallery">
+        <!-- 1️⃣ Replace any of these URLs with your own images -->
+        <img src="https://picsum.photos/id/1015/800/600" alt="Природа 1">
+        <img src="https://picsum.photos/id/1025/800/600" alt="Природа 2">
+        <img src="https://picsum.photos/id/1035/800/600" alt="Природа 3">
+        <img src="https://picsum.photos/id/1045/800/600" alt="Природа 4">
+        <img src="https://picsum.photos/id/1055/800/600" alt="Природа 5">
+        <img src="https://picsum.photos/id/1065/800/600" alt="Природа 6">
+    </section>
+</main>
+
+<footer>
+    © 2026 Ваше имя | Пример сайта с изображениями
+</footer>
+
+</body>
+</html>
